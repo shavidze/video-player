@@ -27,6 +27,7 @@ export class AppComponent implements AfterViewInit{
   @ViewChild('maximizeButton') maximizeButton : ElementRef;
   @ViewChild('minimizeButton') minimizeButton : ElementRef;
 
+  mouseDown : boolean = false;
 
 
   controlsTimeout : any;
@@ -42,7 +43,7 @@ export class AppComponent implements AfterViewInit{
 
     this.listenTimeUpdate();
 
-    this.listenProgressBarClick();
+    this.listenProgressBarEvents();
 
     this.listenForwardRewindButtons();
 
@@ -53,7 +54,7 @@ export class AppComponent implements AfterViewInit{
   }
 
   listePlayPause(){
-    this.playPauseButton.nativeElement.addEventListener('click', this.playPause());
+    this.playPauseButton.nativeElement.addEventListener('click', this.playPause);
   }
 
   initStyles(){
@@ -79,6 +80,7 @@ export class AppComponent implements AfterViewInit{
   listenKeyUp(){
     document.addEventListener('keyup', (event) => {
       if (event.code === 'Space') {
+        debugger
         this.playPause();
       }
 
@@ -102,7 +104,7 @@ export class AppComponent implements AfterViewInit{
     });
   }
 
-  playPause(){
+  playPause = () => {
 
     if (this.video.nativeElement.paused) {
       this.video.nativeElement.play();
@@ -128,7 +130,7 @@ export class AppComponent implements AfterViewInit{
 
   toggleFullScreen(){
     if (!document.fullscreenElement) {
-      debugger
+
       this.videoContainer.nativeElement.requestFullscreen();
     } else {
       document.exitFullscreen();
@@ -148,6 +150,7 @@ export class AppComponent implements AfterViewInit{
   }
 
   listenTimeUpdate(){
+    debugger
     this.video.nativeElement.addEventListener('timeupdate', () => {
       this.watchedBar.nativeElement.style.width = ((this.video.nativeElement.currentTime / this.video.nativeElement.duration) * 100) + '%';
       // TODO: calculate hours as well...
@@ -168,12 +171,41 @@ export class AppComponent implements AfterViewInit{
     });
   }
 
-  listenProgressBarClick(){
-    this.progressBar.nativeElement.addEventListener('click', (event) => {
-      const pos = (event.pageX  - (this.progressBar.nativeElement.offsetLeft + this.progressBar.nativeElement.offsetParent.offsetLeft)) / this.progressBar.nativeElement.offsetWidth;
+  changeProgressBarPosition(xPosition:number){
+    const pos = (xPosition - (this.progressBar.nativeElement.offsetLeft + this.progressBar.nativeElement.offsetParent.offsetLeft)) / this.progressBar.nativeElement.offsetWidth;
       this.video.nativeElement.currentTime = pos * this.video.nativeElement.duration;
-    });
   }
+
+  listenProgressBarEvents(){
+
+
+    this.progressBar.nativeElement.addEventListener('click', (event) => {
+      this.changeProgressBarPosition(event.pageX);
+    });
+
+    this.progressBar.nativeElement.addEventListener('mousedown',() => {
+      this.mouseDown = true;
+    })
+
+
+    this.progressBar.nativeElement.addEventListener('mouseup', () => {
+      this.mouseDown = false;
+    })
+
+    this.progressBar.nativeElement.addEventListener('mousemove',(e) => {
+      if(this.mouseDown){
+        this.changeProgressBarPosition(e.clientX);
+      }
+      console.log(this.progressBar)
+      if(e.clientY < this.progressBar.nativeElement.offsetTop){
+        this.mouseDown  = false;
+      }
+    })
+
+
+  }
+
+
 
   listenForwardRewindButtons(){
     this.rewindButton.nativeElement.addEventListener('click', () => {
